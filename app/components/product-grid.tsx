@@ -58,7 +58,7 @@ export const ProductGrid = ({
           >
             <ProductCard
               product={product}
-              onQuickView={() => setQuickView({ status: "open", product })}
+              onQuickView={() => setQuickView({ status: "open", handle: product.handle })}
             />
           </motion.div>
         ))}

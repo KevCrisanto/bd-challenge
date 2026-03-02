@@ -57,6 +57,8 @@ export const useProductDetail = (handle: string): UseProductDetailResult => {
   const [{ fetchState, selectedOptions }, dispatch] = useReducer(reducer, INITIAL_STATE);
 
   useEffect(() => {
+    if (!handle) return;
+
     const controller = new AbortController();
 
     dispatch({ type: 'FETCH_START' });
