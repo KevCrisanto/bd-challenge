@@ -35,6 +35,65 @@ export const getCollection = `#graphql
   }
 ` as const;
 
+export const getProductByHandle = `#graphql
+  query getProductByHandle($handle: String!) {
+    productByHandle(handle: $handle) {
+      id
+      title
+      handle
+      descriptionHtml
+      featuredImage {
+        url
+        altText
+        width
+        height
+      }
+      priceRange {
+        minVariantPrice {
+          amount
+          currencyCode
+        }
+      }
+      images(first: 10) {
+        edges {
+          node {
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+      options {
+        name
+        values
+      }
+      variants(first: 250) {
+        edges {
+          node {
+            id
+            availableForSale
+            selectedOptions {
+              name
+              value
+            }
+            price {
+              amount
+              currencyCode
+            }
+            image {
+              url
+              altText
+              width
+              height
+            }
+          }
+        }
+      }
+    }
+  }
+` as const;
+
 export const getAllCollections = `#graphql
   query getAllCollections {
     collections(first: 50) {
