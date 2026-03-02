@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { motion } from "motion/react";
-import type { ShopifyProduct } from "@/lib/shopify/types";
+import type { ShopifyProduct } from '@/lib/shopify/types';
+import { motion } from 'motion/react';
+import Image from 'next/image';
 
 /**
  * Displays a single product with its image, title, and price.
@@ -15,13 +15,13 @@ export const ProductCard = ({
   readonly onQuickView: () => void;
 }) => {
   const formattedPrice = new Intl.NumberFormat(undefined, {
-    style: "currency",
+    style: 'currency',
     currency: product.priceRange.minVariantPrice.currencyCode,
   }).format(parseFloat(product.priceRange.minVariantPrice.amount));
 
   return (
     <motion.article
-      className="relative group overflow-hidden rounded-xl bg-neutral-50 dark:bg-neutral-900 cursor-pointer h-full flex flex-col"
+      className="relative group overflow-hidden rounded-xl bg-neutral-50 dark:bg-neutral-900 h-full flex flex-col"
       initial="rest"
       animate="rest"
       whileHover="hovered"
@@ -50,14 +50,14 @@ export const ProductCard = ({
           {formattedPrice}
         </p>
         <button
-            className="mt-auto w-full py-1.5 text-sm font-medium rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuickView();
-            }}
-          >
-            Quick View
-          </button>
+          className="cursor-pointer mt-auto w-full py-1.5 text-sm font-medium rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onQuickView();
+          }}
+        >
+          Quick View
+        </button>
       </div>
     </motion.article>
   );

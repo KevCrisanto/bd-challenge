@@ -27,6 +27,16 @@ export const QuickViewModal = ({
   const fetchError = "error" in rest ? rest.error : undefined;
 
   const [ctaStatus, setCtaStatus] = useState<CtaStatus>("idle");
+
+  // Reset ctaStatus during render when the product session changes.
+  // Using "setState during render" avoids an extra post-commit render cycle.
+  const ctaKey = `${state.status}-${handle}`;
+  const [prevCtaKey, setPrevCtaKey] = useState(ctaKey);
+  if (prevCtaKey !== ctaKey) {
+    setPrevCtaKey(ctaKey);
+    setCtaStatus("idle");
+  }
+
   const ctaTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<Element | null>(null);
@@ -61,12 +71,12 @@ export const QuickViewModal = ({
     };
   }, [state.status]);
 
+  // Cancel any in-flight timer when the product session changes.
   useEffect(() => {
     if (ctaTimerRef.current !== undefined) {
       clearTimeout(ctaTimerRef.current);
       ctaTimerRef.current = undefined;
     }
-    setCtaStatus("idle");
   }, [state.status, handle]);
 
   const handleAddToBag = (): void => {
@@ -92,11 +102,18 @@ export const QuickViewModal = ({
   })();
 
   const displayImage = resolvedVariant?.image ?? product?.featuredImage ?? null;
+  const imageKey = displayImage?.url ?? "placeholder";
 
   const isCtaDisabled =
     ctaStatus !== "idle" ||
     resolvedVariant === undefined ||
     !resolvedVariant.availableForSale;
+
+  const ctaLabel = (() => {
+    if (resolvedVariant === undefined) return "Select options";
+    if (!resolvedVariant.availableForSale) return "Out of Stock";
+    return "Add to Bag";
+  })();
 
   return (
     <AnimatePresence>
@@ -107,14 +124,15 @@ export const QuickViewModal = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={onClose}
           />
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
           >
             <div
               className="relative bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden max-w-3xl w-full shadow-2xl pointer-events-auto"
@@ -141,17 +159,35 @@ export const QuickViewModal = ({
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   {/* Left column: media */}
                   <div className="aspect-[3/4] md:aspect-auto md:h-full relative overflow-hidden">
-                    {displayImage ? (
-                      <Image
-                        src={displayImage.url}
-                        alt={displayImage.altText ?? product.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800" />
-                    )}
+                    <AnimatePresence mode="wait">
+                      {displayImage ? (
+                        <motion.div
+                          key={imageKey}
+                          className="absolute inset-0"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25, ease: "easeInOut" }}
+                        >
+                          <Image
+                            src={displayImage.url}
+                            alt={displayImage.altText ?? product.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="object-cover"
+                          />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="placeholder"
+                          className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25, ease: "easeInOut" }}
+                        />
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Right column: content */}
@@ -180,15 +216,29 @@ export const QuickViewModal = ({
                                 onClick={() => setOption(option.name, value)}
                                 disabled={!isAvailable}
                                 className={[
-                                  "px-3 py-1.5 text-sm rounded-full border transition-colors",
+                                  "relative px-3 py-1.5 text-sm rounded-full border transition-colors",
                                   isSelected
-                                    ? "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
+                                    ? "border-neutral-900 dark:border-white"
                                     : isAvailable
                                       ? "border-neutral-300 dark:border-neutral-600 hover:border-neutral-900 dark:hover:border-white"
                                       : "opacity-40 cursor-not-allowed line-through border-neutral-300 dark:border-neutral-600",
                                 ].join(" ")}
                               >
-                                {value}
+                                {isSelected && (
+                                  <motion.span
+                                    layoutId={`pill-bg-${option.name}`}
+                                    className="absolute inset-0 rounded-full bg-neutral-900 dark:bg-white"
+                                    transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                                  />
+                                )}
+                                <span
+                                  className={[
+                                    "relative z-10",
+                                    isSelected ? "text-white dark:text-neutral-900" : "",
+                                  ].join(" ")}
+                                >
+                                  {value}
+                                </span>
                               </button>
                             );
                           })}
@@ -196,23 +246,50 @@ export const QuickViewModal = ({
                       </div>
                     ))}
 
-                    <button
-                      className="mt-auto w-full py-3 text-sm font-medium rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    <motion.button
+                      className="mt-auto w-full py-3 text-sm font-medium rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center overflow-hidden"
                       onClick={handleAddToBag}
                       disabled={isCtaDisabled}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     >
-                      {ctaStatus === "loading" && (
-                        <span className="w-4 h-4 border-2 border-white dark:border-neutral-900 border-t-transparent rounded-full animate-spin" />
-                      )}
-                      {ctaStatus === "success" && "✓ Added"}
-                      {ctaStatus === "idle" && (
-                        resolvedVariant === undefined
-                          ? "Select options"
-                          : resolvedVariant.availableForSale
-                            ? "Add to Bag"
-                            : "Out of Stock"
-                      )}
-                    </button>
+                      <AnimatePresence mode="wait">
+                        {ctaStatus === "loading" && (
+                          <motion.span
+                            key="loading"
+                            className="flex items-center justify-center"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.18, ease: "easeOut" }}
+                          >
+                            <span className="w-4 h-4 border-2 border-white dark:border-neutral-900 border-t-transparent rounded-full animate-spin" />
+                          </motion.span>
+                        )}
+                        {ctaStatus === "success" && (
+                          <motion.span
+                            key="success"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.18, ease: "easeOut" }}
+                          >
+                            ✓ Added
+                          </motion.span>
+                        )}
+                        {ctaStatus === "idle" && (
+                          <motion.span
+                            key="idle"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.18, ease: "easeOut" }}
+                          >
+                            {ctaLabel}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
                   </div>
                 </div>
               )}
