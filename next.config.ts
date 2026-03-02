@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
     useCache: true,
     inlineCss: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cdn.shopify.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

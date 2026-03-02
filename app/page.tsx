@@ -1,27 +1,46 @@
-import * as Components from "./components";
 import { client } from "@/lib/shopify/serverClient";
-import { getShop } from "@/lib/shopify/graphql/query";
+import { getAllCollections } from "@/lib/shopify/graphql/query";
+import { ProductGrid } from "./components/product-grid";
+import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify/types";
 
 export default async function Home() {
   "use cache";
-  const resp = await client.request(getShop);
+  const resp = await client.request(getAllCollections);
+
+  const collections: readonly ShopifyCollection[] =
+    resp.data?.collections.edges.map((edge) => ({
+      title: edge.node.title,
+      products: edge.node.products.edges.map((productEdge): ShopifyProduct => {
+        const img = productEdge.node.featuredImage;
+        return {
+          id: productEdge.node.id,
+          title: productEdge.node.title,
+          handle: productEdge.node.handle,
+          priceRange: productEdge.node.priceRange,
+          featuredImage: img
+            ? {
+                url: img.url,
+                altText: img.altText ?? null,
+                width: img.width ?? null,
+                height: img.height ?? null,
+              }
+            : null,
+        };
+      }),
+    })) ?? [];
+
   return (
-    <Components.NameInputRoot initialValue="world">
-      <main className="w-screen h-screen flex flex-col gap-8 justify-center items-center max-w-2xl mx-auto">
-        <h1 className="text-6xl">
-          Hello <Components.NameDisplay /> and good luck 😄!
-        </h1>
-        {resp.data?.shop.name && (
-          <h2 className="text-4xl">Store name: {resp.data?.shop?.name}</h2>
-        )}
-        <form>
-          <Components.NameInput
-            className="border-2 border-yellow-500 rounded p-4 text-2xl w-full dark:bg-black dark:text-gray-300 dark:placeholder:text-gray-400"
-            name="name"
-            placeholder="name"
-          />
-        </form>
+    <div className="min-h-screen px-4 py-12 md:px-8 max-w-screen-xl mx-auto">
+      <main>
+        {collections.map((collection) => (
+          <section key={collection.title} className="mb-16">
+            <h2 className="text-3xl font-bold tracking-tight mb-8">
+              {collection.title}
+            </h2>
+            <ProductGrid products={collection.products} />
+          </section>
+        ))}
       </main>
-    </Components.NameInputRoot>
+    </div>
   );
 }

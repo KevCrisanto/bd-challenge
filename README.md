@@ -72,8 +72,8 @@ We’re not expecting a full storefront—**just one polished feature**.
 
 ### Required (Must Have)
 
-- [ ] Fetch and render a minimal product listing from the provided Shopify **collection handle** (Storefront API).
-- [ ] Each product card includes at least: image, title, price, and a **Quick View** trigger.
+- [x] Fetch and render a minimal product listing from the provided Shopify **collection handle** (Storefront API).
+- [x] Each product card includes at least: image, title, price, and a **Quick View** trigger.
 - [ ] Clicking **Quick View** opens a **modal** (not a drawer).
 - [ ] Modal can be closed via:
   - [ ] Close button
