@@ -1,7 +1,7 @@
 import { client } from "@/lib/shopify/serverClient";
 import { getAllCollections } from "@/lib/shopify/graphql/query";
-import { ProductGrid } from "./components/product-grid";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify/types";
+import { CollectionView } from "./components/collection-view";
 
 export default async function Home() {
   "use cache";
@@ -29,18 +29,5 @@ export default async function Home() {
       }),
     })) ?? [];
 
-  return (
-    <div className="min-h-screen px-4 py-12 md:px-8 max-w-screen-xl mx-auto">
-      <main>
-        {collections.map((collection) => (
-          <section key={collection.title} className="mb-16">
-            <h2 className="text-3xl font-bold tracking-tight mb-8">
-              {collection.title}
-            </h2>
-            <ProductGrid products={collection.products} />
-          </section>
-        ))}
-      </main>
-    </div>
-  );
+  return <CollectionView collections={collections} />;
 }
