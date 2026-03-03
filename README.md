@@ -158,3 +158,23 @@ NEXT_PUBLIC_SHOPIFY_STOREFRONT_API_VERSION="2025-10"
 
 1. `pnpm dev` -> Start development server
 2. `pnpm codegen` -> Generate storefront api types (`/lib/shopify/graphql`)
+
+## Things to improve if I had more time
+
+## SEO
+
+1. I would add JSON-LD structured data
+2. Opengraph
+
+## Remove dead code
+
+1. There are some files that already existed in the repo that we don't use anymore that we can remove
+
+## Testing
+
+1. End-to-end testing
+2. Unit testing
+
+## Handle errors in API
+
+1. Throw errors that are more helpful with the correct error code
